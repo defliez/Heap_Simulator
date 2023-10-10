@@ -25,13 +25,13 @@ public class ComplexBatch {
 	public void run() {
 		System.out.println("First fit");
 		run(new FirstFit(1000)); // Swap this for  your own implementation
-		System.out.println("\nBest fit");
-		run(new BestFit(1000)); // Swap this for  your own implementation
+		// System.out.println("\nBest fit");
+		// run(new BestFit(1000)); // Swap this for  your own implementation
 	}
 
 	public void run(Memory m) {
 		Pointer[] ps = new Pointer[20];
-		
+
 		ps[0] = m.alloc(100);
 		ps[0].write(range(1, 100));
 		ps[1] = m.alloc(200);

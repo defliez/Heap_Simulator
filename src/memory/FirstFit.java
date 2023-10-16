@@ -10,7 +10,7 @@ import java.util.*;
  */
 public class FirstFit extends Memory {
 
-	// maybe use a linked list to store the address and size of the allocated memory
+	// LinkedList to store and manage memory blocks
 	private LinkedList<MemoryBlock> memoryBlocks;
 
 	/**
@@ -20,11 +20,10 @@ public class FirstFit extends Memory {
 	 */
 	public FirstFit(int size) {
 		super(size);
-		// TODO Implement this!
 		memoryBlocks = new LinkedList<>();
 		memoryBlocks.add(new MemoryBlock(0, size));
-
 	}
+
 	/**
 	 * Allocates a number of memory cells. 
 	 *
@@ -33,7 +32,7 @@ public class FirstFit extends Memory {
 	 */
 	@Override
 	public Pointer alloc(int size) {
-		// TODO Implement this!
+
 		for (MemoryBlock block : memoryBlocks) {
 
 			if (!block.isAllocated() && block.getSize() >= size) {
@@ -45,11 +44,10 @@ public class FirstFit extends Memory {
 					memoryBlocks.add(newFreeBlock);
 					block.setSize(size);
 				}
-				//displayBlocks();
-				System.out.println("Allocated " + size + " cells at " + block.getStartAddress() + "-" + (block.getStartAddress() + block.getSize() - 1));	// debug
 
 				Pointer p = new Pointer(block.getStartAddress(), this);
 				p.pointAt(block.getStartAddress());
+				memoryBlocks.sort(Comparator.comparingInt(MemoryBlock::getStartAddress));
 				return p;
 			}
 		}
@@ -70,54 +68,32 @@ public class FirstFit extends Memory {
 			if (block.getStartAddress() == addressToRelease && block.isAllocated()) {
 				block.deallocate();
 
-				System.out.println("Released " + block.getSize() + " cells at " + block.getStartAddress() + "-" + (block.getStartAddress() + block.getSize() - 1));
-
 				// Merge adjacent free blocks if present
-				//mergeAdjacentFreeBlocks();
+				mergeAdjacentFreeBlocks();
 				return;
 			}
 		}
-		//displayBlocks();
-
 	}
 
 	// Merge adjacent free blocks in the memoryBlocks list
 	private void mergeAdjacentFreeBlocks() {
+		// Sort the list by start address
 		memoryBlocks.sort(Comparator.comparingInt(MemoryBlock::getStartAddress));
-		List<MemoryBlock> mergedBlocks = new ArrayList<>();
 
-		MemoryBlock currentBlock = null;
-		for (MemoryBlock block : memoryBlocks) {
-			if (block.isAllocated()) {
-				// If the current block is allocated, add it to the merged list
-				mergedBlocks.add(block);
-			} else {
-				// If the current block is free, merge it with the previous block if it is also free
-				if (currentBlock != null && !currentBlock.isAllocated()) {
-					currentBlock.setSize(currentBlock.getSize() + block.getSize());
-				} else {
-					// Add the free block to the merged list
-					mergedBlocks.add(block);
-					currentBlock = block;
+		// Merge adjacent free blocks
+		boolean sortingComplete = false;
+
+		while (!sortingComplete) {
+			sortingComplete = true;
+			for (int i = 0; i < memoryBlocks.size() - 1; i++) {
+				MemoryBlock currentBlock = memoryBlocks.get(i);
+				MemoryBlock nextBlock = memoryBlocks.get(i + 1);
+
+				if (!(currentBlock.isAllocated() || nextBlock.isAllocated())) {
+					currentBlock.setSize(currentBlock.getSize() + nextBlock.getSize());
+					memoryBlocks.remove(nextBlock);
+					sortingComplete = false;
 				}
-			}
-		}
-		// Update the memoryBlocks list
-		memoryBlocks = new LinkedList<>(mergedBlocks);
-	}
-
-	public void displayBlocks() {
-		System.out.println("Allocated blocks:");
-		for (MemoryBlock block : memoryBlocks) {
-			if (block.isAllocated()) {
-				System.out.println(block.startAddress + "-" + (block.startAddress + block.size - 1));
-			}
-		}
-
-		System.out.println("Free blocks:");
-		for (MemoryBlock block : memoryBlocks) {
-			if (!block.isAllocated()) {
-				System.out.println(block.startAddress + "-" + (block.startAddress + block.size - 1));
 			}
 		}
 	}
@@ -136,39 +112,15 @@ public class FirstFit extends Memory {
 		System.out.println("Memory layout:");
 		System.out.println("--------------");
 		System.out.println("Allocated\tFree");
+
 		for (MemoryBlock block : memoryBlocks) {
-			//System.out.print(block.isAllocated() ? "\t\t" : "\t\t\t\t");
 			if (block.isAllocated()) {
 				System.out.println("A " + block.getStartAddress() + "-" + (block.getStartAddress() + block.getSize() - 1));
-			} else if (!block.isAllocated()) {
+			} else {
 				System.out.println("F " + block.getStartAddress() + "-" + (block.getStartAddress() + block.getSize() - 1));
 			}
 		}
 		System.out.println("--------------");
-
-		/*
-		int startIndex = -1;
-		for (int i = 0; i < cells.length; i++) {
-			if (cells[i] == 0) {
-				if (startIndex == -1) {
-					startIndex = i;
-				}
-			} else {
-				if (startIndex != -1) {
-					System.out.println("| " + startIndex + " - " + (i - 1) + " | Free");
-					startIndex = -1;
-				}
-				System.out.println("| " + i + " | Allocated");
-			}
-		}
-
-		if (startIndex != -1) {
-			System.out.println("| " + startIndex + " - " + (cells.length - 1) + " | Free");
-		}
-
-		 */
-
-
 	}
 
 	/**
@@ -176,11 +128,9 @@ public class FirstFit extends Memory {
 	 */
 	public void compact() {
 		// TODO Implement this!
-
 	}
 
 	private static class MemoryBlock {
-
 		private int startAddress;
 		private int size;
 		private boolean allocated;
@@ -190,20 +140,11 @@ public class FirstFit extends Memory {
 			this.size = size;
 			this.allocated = false;
 		}
-
-		public void allocate() {
-			this.allocated = true;
-		}
 		public boolean isAllocated() { return allocated; }
-
-		public int getSize() { return size; }
-
+		public void allocate() { this.allocated = true; }
+		public void deallocate() { this.allocated = false; }
 		public int getStartAddress() { return startAddress; }
-
-		public void deallocate() { allocated = false; }
-
-		public void setSize(int i) {
-			this.size = i;
-		}
+		public int getSize() { return size; }
+		public void setSize(int i) { this.size = i; }
 	}
 }

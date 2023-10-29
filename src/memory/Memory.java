@@ -33,7 +33,8 @@ public abstract class Memory extends RawMemory {
 	 * @param p The pointer to release.
 	 */
 	public abstract void release(Pointer p);
-	
+
+
 	/**
 	 * Prints a simple model of the memory. Example:
 	 * 
@@ -43,4 +44,5 @@ public abstract class Memory extends RawMemory {
 	 * | 1000 - 1024 | Free
 	 */
 	public abstract void printLayout();
+
 }

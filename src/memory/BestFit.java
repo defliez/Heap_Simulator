@@ -1,5 +1,8 @@
 package memory;
 
+import java.util.Comparator;
+import java.util.LinkedList;
+
 /**
  * This memory model allocates memory cells based on the best-fit method.
  * 
@@ -8,6 +11,8 @@ package memory;
  */
 public class BestFit extends Memory {
 
+	private LinkedList<MemoryBlock> memoryBlocks;
+
 	/**
 	 * Initializes an instance of a best fit-based memory.
 	 * 
@@ -15,7 +20,8 @@ public class BestFit extends Memory {
 	 */
 	public BestFit(int size) {
 		super(size);
-		// TODO Implement this!
+		memoryBlocks = new LinkedList<>();
+		memoryBlocks.add(new MemoryBlock(0, size));
 	}
 
 	/**
@@ -26,8 +32,40 @@ public class BestFit extends Memory {
 	 */
 	@Override
 	public Pointer alloc(int size) {
-		// TODO Implement this!
-		return null;
+
+		MemoryBlock bestBlock = null;
+		int bestSize = Integer.MAX_VALUE;
+		boolean sameSize = false;
+
+		for (MemoryBlock block : memoryBlocks) {
+			if (!block.isAllocated() && block.getSize() >= size && block.getSize() < bestSize) {
+				bestBlock = block;
+				bestSize = block.getSize();
+
+				// If the block is the same size as the requested size, break the loop
+				if (block.getSize() == size) {
+					sameSize = true;
+					break;
+				}
+			}
+		}
+
+		if (bestBlock != null) {
+			// Allocate the block and split if necessary
+			bestBlock.allocate();
+			// If splitting is needed
+			if (!sameSize) {
+				MemoryBlock newFreeBlock = new MemoryBlock(bestBlock.getStartAddress() + size, bestBlock.getSize() - size);
+				memoryBlocks.add(newFreeBlock);
+				bestBlock.setSize(size);
+			}
+
+			Pointer p = new Pointer(bestBlock.getStartAddress(), this);
+			p.pointAt(bestBlock.getStartAddress());
+			memoryBlocks.sort(Comparator.comparingInt(MemoryBlock::getStartAddress));
+			return p;
+		}
+		return null;	// Allocation failed
 	}
 	
 	/**
@@ -37,7 +75,39 @@ public class BestFit extends Memory {
 	 */
 	@Override
 	public void release(Pointer p) {
-		// TODO Implement this!
+		int addressToRelease = p.pointsAt();
+
+		for (MemoryBlock block : memoryBlocks) {
+			if (block.getStartAddress() == addressToRelease && block.isAllocated()) {
+				block.deallocate();
+
+				// Merge adjacent free blocks if present
+				mergeAdjacentFreeBlocks();
+				return;
+			}
+		}
+	}
+
+	private void mergeAdjacentFreeBlocks() {
+		// Sort the list by start address
+		memoryBlocks.sort(Comparator.comparingInt(MemoryBlock::getStartAddress));
+
+		// Merge adjacent free blocks
+		boolean sortingComplete = false;
+
+		while (!sortingComplete) {
+			sortingComplete = true;
+			for (int i = 0; i < memoryBlocks.size() - 1; i++) {
+				MemoryBlock currentBlock = memoryBlocks.get(i);
+				MemoryBlock nextBlock = memoryBlocks.get(i + 1);
+
+				if (!(currentBlock.isAllocated() || nextBlock.isAllocated())) {
+					currentBlock.setSize(currentBlock.getSize() + nextBlock.getSize());
+					memoryBlocks.remove(nextBlock);
+					sortingComplete = false;
+				}
+			}
+		}
 	}
 	
 	/**
@@ -50,6 +120,15 @@ public class BestFit extends Memory {
 	 */
 	@Override
 	public void printLayout() {
-		// TODO Implement this!
+		System.out.println("Memory layout:");
+		System.out.println("--------------");
+		for (MemoryBlock block : memoryBlocks) {
+			if (block.isAllocated()) {
+				System.out.println(block.getStartAddress() + "-" + (block.getStartAddress() + block.getSize() - 1) + "| Allocated");
+			} else {
+				System.out.println(block.getStartAddress() + "-" + (block.getStartAddress() + block.getSize() - 1) + "| Free");
+			}
+		}
+		System.out.println("--------------");
 	}
 }

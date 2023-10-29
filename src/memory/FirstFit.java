@@ -48,10 +48,10 @@ public class FirstFit extends Memory {
 				Pointer p = new Pointer(block.getStartAddress(), this);
 				p.pointAt(block.getStartAddress());
 				memoryBlocks.sort(Comparator.comparingInt(MemoryBlock::getStartAddress));
+
 				return p;
 			}
 		}
-		System.out.println("Allocation failed");	// debug
 		return null;	// Allocation failed
 	}
 
@@ -99,6 +99,55 @@ public class FirstFit extends Memory {
 	}
 
 	/**
+	 * Compacts the memory space.
+	 *
+	 * @return
+	 */
+	/*
+	@Override
+	public Pointer[] compact(Pointer[] pointers) {
+
+		// Sort the list by start address
+		memoryBlocks.sort(Comparator.comparingInt(MemoryBlock::getStartAddress));
+
+		// Create a new list to store the compacted memory blocks
+		LinkedList<MemoryBlock> compactedMemoryBlocks = new LinkedList<>();
+
+		// Create a new list to store the compacted pointers
+		LinkedList<Pointer> compactedPointers = new LinkedList<>();
+
+		int tempAddress = 0;
+		int nextAddress = 0;
+
+		for (MemoryBlock block : memoryBlocks) {
+			if (block.isAllocated()) {
+				for (Pointer pointer : pointers) {
+					if (pointer.pointsAt() == block.getStartAddress()) {
+						block.setStartAddress(tempAddress);
+						pointer.pointAt(tempAddress);
+
+						compactedMemoryBlocks.add(block);
+						tempAddress += block.getSize();
+					}
+				}
+			}
+		}
+
+		for (MemoryBlock block : memoryBlocks) {
+			if (!block.isAllocated()) {
+				block.setStartAddress(tempAddress);
+				compactedMemoryBlocks.add(block);
+				tempAddress += block.getSize();
+			}
+		}
+
+
+		return compactedPointers.toArray(new Pointer[0]);
+	}
+	 */
+
+
+	/**
 	 * Prints a simple model of the memory. Example:
 	 *
 	 * |    0 -  110 | Allocated
@@ -108,43 +157,15 @@ public class FirstFit extends Memory {
 	 */
 	@Override
 	public void printLayout() {
-		// TODO Implement this!
 		System.out.println("Memory layout:");
 		System.out.println("--------------");
-		System.out.println("Allocated\tFree");
-
 		for (MemoryBlock block : memoryBlocks) {
 			if (block.isAllocated()) {
-				System.out.println("A " + block.getStartAddress() + "-" + (block.getStartAddress() + block.getSize() - 1));
+				System.out.println(block.getStartAddress() + "-" + (block.getStartAddress() + block.getSize() - 1) + "| Allocated");
 			} else {
-				System.out.println("F " + block.getStartAddress() + "-" + (block.getStartAddress() + block.getSize() - 1));
+				System.out.println(block.getStartAddress() + "-" + (block.getStartAddress() + block.getSize() - 1) + "| Free");
 			}
 		}
 		System.out.println("--------------");
-	}
-
-	/**
-	 * Compacts the memory space.
-	 */
-	public void compact() {
-		// TODO Implement this!
-	}
-
-	private static class MemoryBlock {
-		private int startAddress;
-		private int size;
-		private boolean allocated;
-
-		public MemoryBlock(int startAddress, int size) {
-			this.startAddress = startAddress;
-			this.size = size;
-			this.allocated = false;
-		}
-		public boolean isAllocated() { return allocated; }
-		public void allocate() { this.allocated = true; }
-		public void deallocate() { this.allocated = false; }
-		public int getStartAddress() { return startAddress; }
-		public int getSize() { return size; }
-		public void setSize(int i) { this.size = i; }
 	}
 }

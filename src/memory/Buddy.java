@@ -39,7 +39,7 @@ public class Buddy extends Memory {
 	public void release(Pointer p) {
 		// TODO Implement this!
 	}
-	
+
 	/**
 	 * Prints a simple model of the memory. Example:
 	 * 
